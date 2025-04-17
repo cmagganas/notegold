@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# notegold CLI script for global usage
+# This script can be symlinked into a directory in the user's PATH
+
+# Determine the real path to the notegold installation
+SCRIPT_PATH="$(readlink -f "$0")"
+if [ $? -ne 0 ]; then
+    # macOS doesn't have readlink -f, try with greadlink if available
+    if command -v greadlink >/dev/null 2>&1; then
+        SCRIPT_PATH="$(greadlink -f "$0")"
+    else
+        # Fall back to this approach that works on macOS
+        SCRIPT_PATH="$(cd "$(dirname "$0")" && pwd -P)/$(basename "$0")"
+        # If it's a symlink, resolve it
+        if [ -L "$SCRIPT_PATH" ]; then
+            SCRIPT_PATH="$(readlink "$SCRIPT_PATH")"
+        fi
+    fi
+fi
+
+# Get the directory containing the script
+SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
+
+# Check if run.sh exists in the script directory
+if [ -f "$SCRIPT_DIR/run.sh" ]; then
+    # Execute run.sh with all arguments
+    exec "$SCRIPT_DIR/run.sh" "$@"
+else
+    # Try to find run.sh in parent directories (in case this script is in a bin subdirectory)
+    PARENT_DIR="$(dirname "$SCRIPT_DIR")"
+    if [ -f "$PARENT_DIR/run.sh" ]; then
+        exec "$PARENT_DIR/run.sh" "$@"
+    else
+        echo "Error: Could not locate notegold's run.sh script."
+        echo "Please ensure that notegold is properly installed."
+        exit 1
+    fi
+fi 
