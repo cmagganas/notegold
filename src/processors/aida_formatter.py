@@ -1,10 +1,9 @@
-from typing import Dict, List, Any
+from typing import Dict, Any
 import os
-import json
 import re
-from notegold.src.models.data_models import AIDAContent
-from notegold.src.utils.llm_utils import chat_completion
-from notegold.src.utils.file_utils import load_json, save_json
+from src.models.data_models import AIDAContent
+from src.utils.llm_utils import chat_completion
+from src.utils.file_utils import load_json, save_json
 
 def apply_aida_format(ranked_topics_path: str, artifacts_dir: str, outputs_dir: str, top_n: int = 3) -> Dict[str, Any]:
     """

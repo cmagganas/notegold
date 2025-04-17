@@ -1,19 +1,21 @@
 # Notegold: Meeting Notes to Content Flywheel
 
-A modular system for transforming meeting transcripts into valuable content assets.
+A modular system for transforming meeting notes into valuable content assets.
 
 ## Overview
 
-Notegold implements a "Content as a Flywheel" approach that makes it easy to extract insights from client meetings and turn them into high-value content. The system follows a processing pipeline:
+Notegold implements a "Content as a Flywheel" approach that makes it easy to extract insights from client meetings and turn them into high-value content. The system processes meeting notes through a modular pipeline:
 
 ```mermaid
 graph TD
-    A[Meeting Transcript] --> B[Extract Meeting Metadata]
+    A[Meeting Notes] --> B[Extract Meeting Metadata]
     B --> C[Generate Topic Ideas]
     C --> D[Rank Topics by Potential]
-    D --> E[Apply Consulting AIDA Format]
-    E --> F[Create Social Media Content Variations]
+    D --> E[Apply AIDA Format]
+    E --> F[Create Social Media Content]
 ```
+
+Each step in the pipeline transforms your meeting notes into progressively more refined content assets, from raw meeting notes to valuable, shareable content.
 
 ## Features
 
@@ -30,32 +32,66 @@ graph TD
 git clone https://github.com/cmagganas/notegold.git
 cd notegold
 
-# Set up the environment
+# Set up the environment with uv (faster than standard venv)
 make setup
 
-# Set your OpenAI API key
+# Configure your OpenAI API key (two options):
+# Option 1: Set it in your environment
 export OPENAI_API_KEY=your_api_key_here
+
+# Option 2: Create a .env file (recommended)
+echo "OPENAI_API_KEY=your_api_key_here" > .env
 ```
 
 ## Usage
 
 ### Basic Usage
 
-```bash
-./run.sh /path/to/meeting_notes.txt
-```
-
-Or with Make:
+To process meeting notes:
 
 ```bash
-make process NOTES=/path/to/meeting_notes.txt
+# Process notes with automatic meeting ID generation
+make process NOTES=path/to/meeting_notes.txt
+
+# Process notes with a custom meeting ID
+make process NOTES=path/to/meeting_notes.txt MEETING_ID=client_meeting_20250417
 ```
 
-### Advanced Options
+This will:
+1. Create a directory structure in `meetings/[meeting_id]/`
+2. Copy your meeting notes to the `notes/` subdirectory
+3. Process the notes through the content flywheel pipeline
+4. Generate various content artifacts and outputs
 
-```bash
-./run.sh /path/to/meeting_notes.txt --meeting-id custom_meeting_id --graph /path/to/custom_graph.json
+### Output Structure
+
+All processed content will be available in:
+
 ```
+meetings/[meeting_id]/
+├── notes/      # Contains the original meeting notes
+├── artifacts/  # Contains JSON data (metadata, topics, ranked topics)
+├── outputs/    # Contains markdown files (AIDA content, social posts)
+├── metadata/   # Contains processing metadata and summaries
+└── logs/       # Contains detailed processing logs
+```
+
+### Key Output Files
+
+The most valuable outputs are located in the `outputs/` directory:
+
+- `aida_*.md` - Content structured in the AIDA format (Attention, Interest, Desire, Action)
+- `social_posts_*.md` - Social media post variations for different platforms
+- `content_summary.md` - Overview of all generated content with value scores
+
+### Troubleshooting
+
+If you encounter issues:
+
+1. Ensure your OpenAI API key is properly set
+2. Check that the meeting notes file exists and is readable
+3. Look for error messages in the console output
+4. Examine the logs in `meetings/[meeting_id]/logs/` for detailed errors
 
 ## Customizing the Processing Graph
 
@@ -64,20 +100,35 @@ You can create custom processing graphs by modifying the graph JSON structure. S
 ## Project Structure
 
 ```
-notegold/
-├── meeting_id123/                # Created per meeting
-│   ├── meeting_notes/            # Original transcript
-│   ├── artifacts/                # Intermediate artifacts
-│   ├── outputs/                  # Final content products
-│   └── metadata/                 # Graph structure metadata
-├── src/                          # Source code
-│   ├── processors/               # Processing modules
-│   ├── utils/                    # Utility functions
-│   ├── models/                   # Data models
-│   └── main.py                   # Main entry point
-├── run.sh                        # Shell script runner
-├── Makefile                      # Build and operation commands
-└── README.md                     # Documentation
+notegold/                        # Root project directory
+├── .venv/                       # Virtual environment (created by make setup)
+├── .env                         # Environment variables (optional)
+├── meetings/                    # All processed meetings
+│   └── meeting_id123/           # Example meeting
+│       ├── notes/               # Original meeting notes
+│       ├── artifacts/           # JSON data files
+│       ├── outputs/             # Content outputs (markdown)
+│       ├── metadata/            # Processing metadata
+│       └── logs/                # Processing logs
+├── src/                         # Source code
+│   ├── models/                  # Data models
+│   │   └── data_models.py       # Pydantic models for data
+│   ├── processors/              # Processing modules
+│   │   ├── metadata_extractor.py # Extract metadata from notes
+│   │   ├── topic_generator.py   # Generate topic ideas
+│   │   ├── topic_ranker.py      # Rank topics by value
+│   │   ├── aida_formatter.py    # Format using AIDA framework
+│   │   └── content_generator.py # Generate social content
+│   ├── utils/                   # Utility functions
+│   │   ├── file_utils.py        # File and directory operations
+│   │   ├── graph_utils.py       # Processing graph execution
+│   │   ├── llm_utils.py         # LLM integration utilities
+│   │   └── log_utils.py         # Logging utilities
+│   └── main.py                  # Main entry point
+├── pyproject.toml               # Project metadata and dependencies
+├── Makefile                     # Build and operation commands
+├── run.sh                       # Shell script for running app
+└── README.md                    # Documentation
 ```
 
 ## Development
@@ -96,4 +147,4 @@ make clean
 
 ## License
 
-MIT 
+MIT

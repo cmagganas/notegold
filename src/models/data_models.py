@@ -12,7 +12,7 @@ class MeetingMetadata:
     goals: List[str] = field(default_factory=list)
     questions: List[str] = field(default_factory=list)
     extraction_date: str = field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d"))
-    transcript_path: str = ""
+    meeting_notes_path: str = ""
 
 @dataclass
 class TopicIdea:

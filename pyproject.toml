@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "notegold"
+version = "0.1.0"
+description = "Transform meeting notes into valuable content assets"
+authors = [
+    {name = "Christos Magganas", email = "example@example.com"}
+]
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "openai>=1.0.0",
+    "requests>=2.28.0",  # Used for API calls
+    "pydantic>=2.0.0",   # Used in data_models.py for data validation
+    "python-dotenv>=1.0.0",  # Used to load OPENAI_API_KEY from .env file
+]
+
+[tool.setuptools]
+packages = ["src"]
+package-dir = {"" = "."}
+
+[project.scripts]
+notegold = "src.main:main" 

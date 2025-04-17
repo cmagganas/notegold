@@ -1,39 +1,22 @@
 #!/bin/bash
 
-# notegold CLI script
-# Usage: ./run.sh /path/to/meeting_notes.txt [--meeting-id ID] [--graph /path/to/graph.json]
+# This script runs the notegold application with proper module paths
 
-# Ensure we're in the correct directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+# Get directory of this script
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-# Check if OpenAI API key is set
-if [ -z "$OPENAI_API_KEY" ]; then
-    echo "Error: OPENAI_API_KEY environment variable not set."
-    echo "Please set your OpenAI API key with: export OPENAI_API_KEY=your_api_key"
-    exit 1
+# Activate environment if it exists
+if [ -d "$SCRIPT_DIR/.venv" ]; then
+    source "$SCRIPT_DIR/.venv/bin/activate"
 fi
 
-# Check if Python is installed
-if ! command -v python3 &> /dev/null; then
-    echo "Error: Python 3 is required but not found."
-    exit 1
-fi
+# Export pythonpath to ensure modules are found
+export PYTHONPATH="$SCRIPT_DIR:$PYTHONPATH"
 
-# Check if we have a virtual environment
-if [ ! -d "venv" ] && [ ! -d ".venv" ]; then
-    echo "Setting up virtual environment..."
-    python3 -m venv .venv
-    source .venv/bin/activate
-    pip install -e .
-else
-    # Activate existing virtual environment
-    if [ -d "venv" ]; then
-        source venv/bin/activate
-    else
-        source .venv/bin/activate
-    fi
-fi
+# Run the application as a module
+python -m src.main "$@"
 
-# Run the notegold application
-python -m src.main "$@" 
+# Deactivate environment if activated
+if [ -n "$VIRTUAL_ENV" ]; then
+    deactivate
+fi 

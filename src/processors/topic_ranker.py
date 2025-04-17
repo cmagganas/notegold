@@ -1,9 +1,9 @@
 from typing import Dict, List, Any
 import os
 import json
-from notegold.src.models.data_models import RankedTopic
-from notegold.src.utils.llm_utils import chat_completion, extract_json_from_response
-from notegold.src.utils.file_utils import load_json, save_json
+from src.models.data_models import RankedTopic
+from src.utils.llm_utils import chat_completion, extract_json_from_response
+from src.utils.file_utils import load_json, save_json
 
 def rank_topics(topics_path: str, artifacts_dir: str) -> Dict[str, Any]:
     """

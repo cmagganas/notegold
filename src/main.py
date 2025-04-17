@@ -3,90 +3,138 @@
 import os
 import sys
 import argparse
-from typing import Dict, Any, Optional
+import time
+from datetime import datetime
 
-from .utils.file_utils import setup_meeting_directory, load_text
-from .utils.graph_utils import create_default_graph, save_graph, load_graph, execute_graph
+from src.utils.file_utils import (
+    setup_meeting_directory,
+    save_json,
+    load_text
+)
+from src.utils.graph_utils import (
+    load_graph,
+    create_default_graph,
+    execute_graph
+)
 
-def process_meeting_notes(meeting_notes_path: str, meeting_id: Optional[str] = None, graph_path: Optional[str] = None) -> Dict[str, Any]:
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Process meeting notes")
+    parser.add_argument('meeting_notes_path', help='Path to the meeting notes file')
+    parser.add_argument('--meeting-id', help='Meeting ID (defaults to filename if not provided)')
+    parser.add_argument('--graph-path', help='Path to the processing graph')
+    parser.add_argument('--output-dir', help='Output directory', default='.')
+    
+    return parser.parse_args()
+
+def process_meeting_notes(meeting_notes_path, meeting_id=None, graph_path=None, output_dir='.'):
     """
     Process meeting notes through the content flywheel.
     
     Args:
         meeting_notes_path: Path to the meeting notes file
-        meeting_id: Optional meeting ID (generated if not provided)
-        graph_path: Optional path to a custom processing graph
-        
+        meeting_id: Meeting ID (defaults to filename if not provided)
+        graph_path: Path to the processing graph (defaults to built-in graph)
+        output_dir: Output directory (defaults to current directory)
+    
     Returns:
-        Results from the processing pipeline
+        Dictionary with processing results
     """
-    # Setup meeting directory
-    dir_paths = setup_meeting_directory(meeting_notes_path, meeting_id)
+    # Setup directory structure
+    directories = setup_meeting_directory(meeting_notes_path, meeting_id, output_dir)
     
-    # Create initial context
-    context = {
-        "transcript_path": dir_paths["meeting_notes_path"],
-        "artifacts_dir": dir_paths["artifacts_dir"],
-        "outputs_dir": dir_paths["outputs_dir"],
-        "metadata_dir": dir_paths["metadata_dir"]
-    }
+    # Log the start of processing
+    start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{start_time}] Starting to process meeting notes: {meeting_notes_path}")
     
-    # Load or create processing graph
-    if graph_path and os.path.exists(graph_path):
+    # Load the meeting notes
+    meeting_notes = load_text(directories["meeting_notes_path"])
+    
+    # Load or create the processing graph
+    if graph_path:
         graph = load_graph(graph_path)
     else:
         graph = create_default_graph()
-        # Save default graph to metadata directory
-        graph_path = os.path.join(dir_paths["metadata_dir"], "processing_graph.json")
-        save_graph(graph, graph_path)
     
-    # Execute the processing graph
-    results = execute_graph(graph, context)
+    # Prepare initial context
+    context = {
+        "meeting_notes_path": directories["meeting_notes_path"],
+        "artifacts_dir": directories["artifacts_dir"],
+        "outputs_dir": directories["outputs_dir"],
+        "metadata_dir": directories["metadata_dir"],
+        "logs_dir": directories["logs_dir"],
+        "meeting_id": directories["meeting_id"]
+    }
     
-    return results
+    # Execute the graph
+    try:
+        result_context = execute_graph(graph, context)
+        
+        # Add metadata about the run
+        metadata = {
+            "meeting_id": directories["meeting_id"],
+            "processed_at": datetime.now().isoformat(),
+            "status": "success",
+            "graph_name": graph.name
+        }
+        
+        # Save processing metadata
+        metadata_path = os.path.join(directories["metadata_dir"], "processing_metadata.json")
+        save_json(metadata, metadata_path)
+        
+        # Print success message with completion time
+        end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        execution_time = time.time() - time.mktime(datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S").timetuple())
+        print(f"[{end_time}] ✅ Meeting notes processed successfully in {execution_time:.2f} seconds")
+        
+        # If we have a processing summary, print it
+        if "processing_summary" in result_context:
+            print("\nProcessing Summary:")
+            print(result_context["processing_summary"])
+        
+        return {
+            "status": "success",
+            "meeting_id": directories["meeting_id"],
+            "artifacts": result_context
+        }
+        
+    except Exception as e:
+        # Log the error
+        error_metadata = {
+            "meeting_id": directories["meeting_id"],
+            "processed_at": datetime.now().isoformat(),
+            "status": "error",
+            "error": str(e),
+            "graph_name": graph.name
+        }
+        
+        # Save error metadata
+        error_path = os.path.join(directories["metadata_dir"], "processing_error.json")
+        save_json(error_metadata, error_path)
+        
+        # Print error message
+        end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        print(f"[{end_time}] ❌ Error processing meeting notes: {str(e)}")
+        
+        # Re-raise the exception
+        raise e
 
 def main():
-    """Main entry point for the notegold CLI."""
-    parser = argparse.ArgumentParser(description="Notegold: Meeting notes to content flywheel")
+    """
+    Main entry point for the command-line application.
+    """
+    args = parse_arguments()
     
-    parser.add_argument("meeting_notes", help="Path to meeting notes file")
-    parser.add_argument("--meeting-id", help="Custom meeting ID (optional)")
-    parser.add_argument("--graph", help="Path to custom processing graph (optional)")
-    
-    args = parser.parse_args()
-    
-    # Check if meeting notes file exists
-    if not os.path.exists(args.meeting_notes):
-        print(f"Error: Meeting notes file not found: {args.meeting_notes}")
-        sys.exit(1)
-    
-    # Process the meeting notes
     try:
-        results = process_meeting_notes(
-            meeting_notes_path=args.meeting_notes,
+        result = process_meeting_notes(
+            meeting_notes_path=args.meeting_notes_path,
             meeting_id=args.meeting_id,
-            graph_path=args.graph
+            graph_path=args.graph_path,
+            output_dir=args.output_dir
         )
-        
-        # Print summary of results
-        print("\nContent Flywheel Processing Complete!")
-        print("===================================")
-        
-        # Show paths to generated content
-        if "social_content_paths" in results:
-            print("\nSocial Media Content:")
-            for path in results["social_content_paths"]:
-                print(f"- {path}")
-        
-        base_dir = os.path.dirname(results.get("metadata_path", ""))
-        if base_dir:
-            print(f"\nAll artifacts available in: {base_dir}")
-            
+        return 0
     except Exception as e:
-        print(f"Error processing meeting notes: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
+        print(f"Error: {str(e)}")
+        return 1
 
 if __name__ == "__main__":
-    main() 
+    sys.exit(main()) 

@@ -1,9 +1,9 @@
 from typing import Dict, List, Any
 import os
 import json
-from notegold.src.models.data_models import SocialMediaPost
-from notegold.src.utils.llm_utils import chat_completion, extract_json_from_response
-from notegold.src.utils.file_utils import load_json, save_json
+from src.models.data_models import SocialMediaPost
+from src.utils.llm_utils import chat_completion, extract_json_from_response
+from src.utils.file_utils import load_json, save_json
 
 def create_social_content(aida_content_path: str, artifacts_dir: str, outputs_dir: str) -> Dict[str, Any]:
     """

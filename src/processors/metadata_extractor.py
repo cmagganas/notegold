@@ -1,76 +1,79 @@
-from typing import Dict, List, Any
+from typing import Dict, Any
 import os
-import json
-from notegold.src.models.data_models import MeetingMetadata
-from notegold.src.utils.llm_utils import chat_completion, extract_json_from_response
-from notegold.src.utils.file_utils import save_json
+from src.utils.llm_utils import chat_completion, extract_json_from_response
+from src.utils.file_utils import save_json
+import time
+from datetime import datetime
 
-def extract_metadata(transcript_path: str, artifacts_dir: str) -> Dict[str, Any]:
+def extract_metadata(meeting_notes_path: str, artifacts_dir: str) -> Dict[str, Any]:
     """
-    Extract metadata from meeting transcript.
+    Extract metadata from meeting notes.
     
     Args:
-        transcript_path: Path to meeting transcript file
+        meeting_notes_path: Path to the meeting notes file
         artifacts_dir: Directory to save artifacts
         
     Returns:
         Dictionary with metadata and output path
     """
-    # Read transcript
-    with open(transcript_path, 'r') as f:
-        transcript = f.read()
+    # Generate unique meeting ID
+    meeting_id = f"meeting_{int(time.time())}"
     
-    # Generate meeting ID from filename
-    meeting_id = os.path.basename(transcript_path).split('.')[0]
+    # Load transcript
+    with open(meeting_notes_path, 'r') as f:
+        transcript = f.read()
     
     # Create prompt for metadata extraction
     system_message = """
-    You are an expert at analyzing meeting transcripts and extracting key metadata.
-    Extract structured information from the meeting transcript in JSON format.
+    You are an expert AI consultant analyzing meeting notes.
+    Extract key metadata from the meeting notes provided.
+    Your response should be valid JSON only.
     """
     
     prompt = f"""
-    Analyze this meeting transcript and extract the following metadata in JSON format:
+    Extract the following metadata from these meeting notes:
     
-    1. Client name and company
-    2. Industry
-    3. Main pain points discussed (list)
-    4. Goals or desired outcomes (list)
-    5. Key questions asked by the client (list)
+    1. Meeting title (descriptive title based on content)
+    2. Meeting date (if mentioned, otherwise leave empty)
+    3. Attendees (names of people in the meeting)
+    4. Client name (the organization being consulted)
+    5. Primary contact (main client representative)
+    6. Project name (if mentioned)
+    7. Main topics discussed (list of 3-5 key topics)
+    8. Key pain points (list of problems/challenges mentioned)
+    9. Requested deliverables (specific outputs requested by client)
+    10. Next steps (agreed follow-up actions)
     
-    Format your response as a JSON object with these fields:
+    Meeting notes:
+    {transcript[:4000]}
+    
+    Format your response as a JSON object with these keys:
+    - meeting_title (string)
+    - meeting_date (string, YYYY-MM-DD format or empty)
+    - attendees (array of strings)
     - client_name (string)
-    - company_name (string)
-    - industry (string)
+    - primary_contact (string)
+    - project_name (string)
+    - main_topics (array of strings)
     - pain_points (array of strings)
-    - goals (array of strings)
-    - questions (array of strings)
-    
-    Transcript:
-    {transcript}
+    - requested_deliverables (array of strings)
+    - next_steps (array of strings)
     """
     
     # Get metadata using LLM
     response = chat_completion(prompt, system_message)
-    extracted_data = extract_json_from_response(response)
+    metadata = extract_json_from_response(response)
     
-    # Create MeetingMetadata object
-    metadata = MeetingMetadata(
-        meeting_id=meeting_id,
-        client_name=extracted_data.get("client_name", ""),
-        company_name=extracted_data.get("company_name", ""),
-        industry=extracted_data.get("industry", ""),
-        pain_points=extracted_data.get("pain_points", []),
-        goals=extracted_data.get("goals", []),
-        questions=extracted_data.get("questions", []),
-        transcript_path=transcript_path
-    )
+    # Add additional metadata
+    metadata['meeting_id'] = meeting_id
+    metadata['processing_date'] = datetime.now().strftime('%Y-%m-%d')
+    metadata['meeting_notes_path'] = meeting_notes_path
     
     # Save metadata to JSON file
-    output_path = os.path.join(artifacts_dir, "meeting_metadata.json")
-    save_json(metadata.__dict__, output_path)
+    output_path = os.path.join(artifacts_dir, f"{meeting_id}_metadata.json")
+    save_json(metadata, output_path)
     
     return {
-        "metadata": metadata.__dict__,
+        "metadata": metadata,
         "metadata_path": output_path
     } 

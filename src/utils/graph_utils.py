@@ -1,8 +1,10 @@
 import json
 import os
-from typing import Dict, List, Any, Callable, Optional
+import time
+from typing import Dict, Any, Callable, Optional
 import importlib
-from ..models.data_models import ProcessingGraph, ProcessingNode, ProcessingEdge
+from src.models.data_models import ProcessingGraph, ProcessingNode, ProcessingEdge
+from src.utils.log_utils import ProcessLogger
 
 def load_graph(graph_path: str) -> ProcessingGraph:
     """
@@ -68,9 +70,9 @@ def create_default_graph() -> ProcessingGraph:
         ProcessingNode(
             id="extract_metadata",
             name="Extract Meeting Metadata",
-            description="Extract metadata from meeting transcript",
+            description="Extract metadata from meeting notes",
             processor_function="processors.metadata_extractor.extract_metadata",
-            input_artifacts=["transcript_path"],
+            input_artifacts=["meeting_notes_path"],
             output_artifacts=["metadata_path"],
             parameters={}
         ),
@@ -79,7 +81,7 @@ def create_default_graph() -> ProcessingGraph:
             name="Generate Topic Ideas",
             description="Generate topic ideas from meeting metadata",
             processor_function="processors.topic_generator.generate_topics",
-            input_artifacts=["metadata_path", "transcript_path"],
+            input_artifacts=["metadata_path", "meeting_notes_path"],
             output_artifacts=["topics_path"],
             parameters={}
         ),
@@ -153,13 +155,14 @@ def import_processor_function(function_path: str) -> Callable:
     module = importlib.import_module(f"src.{module_path}")
     return getattr(module, function_name)
 
-def execute_node(node: ProcessingNode, context: Dict[str, Any]) -> Dict[str, Any]:
+def execute_node(node: ProcessingNode, context: Dict[str, Any], logger: Optional[ProcessLogger] = None) -> Dict[str, Any]:
     """
     Execute a processing node with the given context.
     
     Args:
         node: ProcessingNode to execute
         context: Dictionary with context variables
+        logger: Optional ProcessLogger for logging
         
     Returns:
         Node execution result
@@ -170,16 +173,41 @@ def execute_node(node: ProcessingNode, context: Dict[str, Any]) -> Dict[str, Any
     # Prepare function arguments
     args = {}
     
+    # Always add artifacts_dir
+    if "artifacts_dir" in context:
+        args["artifacts_dir"] = context["artifacts_dir"]
+    
+    # Add outputs_dir only for nodes that need it
+    if "outputs_dir" in context and node.id in ["apply_aida", "create_social"]:
+        args["outputs_dir"] = context["outputs_dir"]
+    
     # Add input artifacts
     for artifact_name in node.input_artifacts:
         if artifact_name in context:
-            args[artifact_name.replace("_path", "")] = context[artifact_name]
+            # Use artifact name as is for paths
+            args[artifact_name] = context[artifact_name]
     
     # Add parameters
     args.update(node.parameters)
     
     # Execute the function
-    return processor_func(**args)
+    result = processor_func(**args)
+    
+    # Log artifacts if logger is provided
+    if logger:
+        for output_artifact in node.output_artifacts:
+            if output_artifact in result:
+                artifact_path = result[output_artifact]
+                artifact_type = output_artifact.replace("_path", "")
+                
+                # Handle both single paths and lists of paths
+                if isinstance(artifact_path, list):
+                    for path in artifact_path:
+                        logger.log_artifact(path, artifact_type)
+                else:
+                    logger.log_artifact(artifact_path, artifact_type)
+    
+    return result
 
 def execute_graph(graph: ProcessingGraph, initial_context: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -194,6 +222,11 @@ def execute_graph(graph: ProcessingGraph, initial_context: Dict[str, Any]) -> Di
     """
     context = initial_context.copy()
     executed_nodes = set()
+    
+    # Initialize logger if logs_dir is in context
+    logger = None
+    if "logs_dir" in context:
+        logger = ProcessLogger(context["logs_dir"])
     
     # Keep track of node dependencies
     node_dependencies = {node.id: [] for node in graph.nodes}
@@ -211,19 +244,57 @@ def execute_graph(graph: ProcessingGraph, initial_context: Dict[str, Any]) -> Di
             
             # Check if all dependencies have been executed
             if all(dep in executed_nodes for dep in node_dependencies[node.id]):
+                # Find the edge being executed (for logging)
+                edge_source = None
+                for edge in graph.edges:
+                    if edge.target_node_id == node.id:
+                        edge_source = edge.source_node_id
+                        break
+                
+                # Start logging this edge
+                if logger and edge_source:
+                    logger.log_edge_start(edge_source, node.id)
+                
+                # Measure execution time
+                start_time = time.time()
+                
                 # Execute the node
-                result = execute_node(node, context)
-                
-                # Update context with the results
-                context.update(result)
-                
-                # Mark as executed
-                executed_nodes.add(node.id)
-                executed_node_this_round = True
+                try:
+                    result = execute_node(node, context, logger)
+                    
+                    # Calculate execution time
+                    execution_time_ms = int((time.time() - start_time) * 1000)
+                    
+                    # Log edge completion
+                    if logger and edge_source:
+                        logger.log_edge_complete(execution_time_ms, "complete")
+                    
+                    # Update context with the results
+                    context.update(result)
+                    
+                    # Mark as executed
+                    executed_nodes.add(node.id)
+                    executed_node_this_round = True
+                    
+                except Exception as e:
+                    # Calculate execution time
+                    execution_time_ms = int((time.time() - start_time) * 1000)
+                    
+                    # Log edge error
+                    if logger and edge_source:
+                        logger.log_edge_complete(execution_time_ms, f"error: {str(e)}")
+                    
+                    # Re-raise the exception
+                    raise e
         
         # If no nodes were executed in this round, we have a dependency cycle
         if not executed_node_this_round and len(executed_nodes) < len(graph.nodes):
             unexecuted = [node.id for node in graph.nodes if node.id not in executed_nodes]
             raise ValueError(f"Dependency cycle detected in graph. Unexecuted nodes: {unexecuted}")
+    
+    # Generate summary logs
+    if logger:
+        summary = logger.log_summary()
+        context["processing_summary"] = summary
     
     return context 
