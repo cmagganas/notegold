@@ -40,7 +40,8 @@ make setup
 export OPENAI_API_KEY=your_api_key_here
 
 # Option 2: Create a .env file (recommended)
-echo "OPENAI_API_KEY=your_api_key_here" > .env
+echo "export OPENAI_API_KEY=your_api_key_here" > .env
+source .env
 ```
 
 ## Usage
@@ -58,6 +59,7 @@ make process NOTES=path/to/meeting_notes.txt MEETING_ID=client_meeting_20250417
 ```
 
 This will:
+
 1. Create a directory structure in `meetings/[meeting_id]/`
 2. Copy your meeting notes to the `notes/` subdirectory
 3. Process the notes through the content flywheel pipeline
@@ -67,7 +69,7 @@ This will:
 
 All processed content will be available in:
 
-```
+```bash
 meetings/[meeting_id]/
 ├── notes/      # Contains the original meeting notes
 ├── artifacts/  # Contains JSON data (metadata, topics, ranked topics)
@@ -99,7 +101,7 @@ You can create custom processing graphs by modifying the graph JSON structure. S
 
 ## Project Structure
 
-```
+```bash
 notegold/                        # Root project directory
 ├── .venv/                       # Virtual environment (created by make setup)
 ├── .env                         # Environment variables (optional)
