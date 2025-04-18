@@ -19,8 +19,8 @@ dependencies = [
 ]
 
 [tool.setuptools]
-packages = ["src"]
+packages = ["notegold"]
 package-dir = {"" = "."}
 
 [project.scripts]
-notegold = "src.main:main" 
+notegold = "notegold.src.main:main" 

@@ -1,0 +1,41 @@
+{
+  "log_entries": [
+    {
+      "source": "extract_metadata",
+      "target": "generate_topics",
+      "status": "complete",
+      "start_time": "2025-04-17T18:44:43.014824",
+      "artifacts": [
+        {
+          "path": "./meetings/meeting_example_meeting/artifacts/topic_ideas.json",
+          "type": "topics",
+          "created_at": "2025-04-17T18:44:58.365367"
+        }
+      ],
+      "execution_time_ms": 15350
+    },
+    {
+      "source": "generate_topics",
+      "target": "rank_topics",
+      "status": "complete",
+      "start_time": "2025-04-17T18:44:58.366491",
+      "artifacts": [
+        {
+          "path": "./meetings/meeting_example_meeting/artifacts/ranked_topics.json",
+          "type": "ranked_topics",
+          "created_at": "2025-04-17T18:45:17.141197"
+        }
+      ],
+      "execution_time_ms": 18774
+    }
+  ],
+  "current_edge": {
+    "source": "rank_topics",
+    "target": "apply_aida",
+    "status": "processing",
+    "start_time": "2025-04-17T18:45:17.141773",
+    "artifacts": [],
+    "execution_time_ms": 0
+  },
+  "last_updated": "2025-04-17T18:45:17.141787"
+}

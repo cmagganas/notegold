@@ -118,23 +118,73 @@ def process_meeting_notes(meeting_notes_path, meeting_id=None, graph_path=None, 
         # Re-raise the exception
         raise e
 
-def main():
-    """
-    Main entry point for the command-line application.
-    """
-    args = parse_arguments()
+def interactive_start():
+    """Interactive version of the command to walk users through the process."""
+    import os
     
-    try:
-        result = process_meeting_notes(
-            meeting_notes_path=args.meeting_notes_path,
-            meeting_id=args.meeting_id,
-            graph_path=args.graph_path,
-            output_dir=args.output_dir
-        )
-        return 0
-    except Exception as e:
-        print(f"Error: {str(e)}")
+    # Get meeting notes path
+    meeting_notes_path = input("Path to meeting notes file: ").strip()
+    if not os.path.exists(meeting_notes_path):
+        print(f"Error: File not found: {meeting_notes_path}")
         return 1
+    
+    # Optional meeting ID
+    meeting_id = input("Meeting ID (optional, press Enter to use default): ").strip()
+    if not meeting_id:
+        meeting_id = None
+    
+    # Output directory (with default)
+    output_dir = input("Output directory (optional, press Enter for current directory): ").strip()
+    if not output_dir:
+        output_dir = "."
+    
+    # Call the main processing function
+    try:
+        return process_meeting_notes(
+            meeting_notes_path=meeting_notes_path,
+            meeting_id=meeting_id,
+            graph_path=None,  # Use default graph
+            output_dir=output_dir
+        )
+    except Exception as e:
+        print(f"Error processing meeting notes: {e}")
+        return 1
+
+def main():
+    parser = argparse.ArgumentParser(description="Process meeting notes")
+    
+    # Add a subparser for different commands
+    subparsers = parser.add_subparsers(dest="command", help="Command to run")
+    
+    # "process" command - original functionality
+    process_parser = subparsers.add_parser("process", help="Process meeting notes with all options")
+    process_parser.add_argument("meeting_notes_path", help="Path to the meeting notes file")
+    process_parser.add_argument("--meeting-id", help="Meeting ID (defaults to filename if not provided)")
+    process_parser.add_argument("--graph-path", help="Path to the processing graph")
+    process_parser.add_argument("--output-dir", default=".", help="Output directory")
+    
+    # "start" command - simplified interactive version
+    subparsers.add_parser("start", help="Interactive guided setup")
+    
+    args = parser.parse_args()
+    
+    if args.command == "start":
+        return interactive_start()
+    elif args.command == "process":
+        try:
+            return process_meeting_notes(
+                meeting_notes_path=args.meeting_notes_path,
+                meeting_id=args.meeting_id,
+                graph_path=args.graph_path,
+                output_dir=args.output_dir
+            )
+        except Exception as e:
+            print(f"Error processing meeting notes: {e}")
+            return 1
+    else:
+        # Default to showing help if no command specified
+        parser.print_help()
+        return 0
 
 if __name__ == "__main__":
     sys.exit(main()) 

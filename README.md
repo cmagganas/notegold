@@ -150,3 +150,20 @@ make clean
 ## License
 
 MIT
+
+## Easy Start
+
+For first-time users, Notegold offers an interactive start mode:
+
+```bash
+# Run in interactive mode for guided setup
+notegold start
+```
+
+This will prompt you for:
+
+- Path to your meeting notes file
+- Optional meeting ID
+- Optional output directory
+
+Follow the prompts to quickly process your meeting notes.

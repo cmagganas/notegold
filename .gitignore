@@ -104,8 +104,12 @@ venv.bak/
 .mypy_cache/
 
 # Project specific
-meetings/*/
-!meetings/meeting_id123/  # Keep the example directory
+meetings/*
+
+# Keep the example directory
+!meetings/meeting_example_meeting/
+!meetings/meeting_example_meeting/*/
+!meetings/meeting_example_meeting/*/*/
 
 # env
 .env

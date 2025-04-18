@@ -1,0 +1,39 @@
+{
+  "meeting_title": "GenAI opportunities",
+  "meeting_date": "2025-04-01",
+  "attendees": [
+    "Christos Magganas",
+    "Todd"
+  ],
+  "client_name": "AtTheIntersectionsOf",
+  "primary_contact": "Todd",
+  "project_name": "GenAI Strategy Implementation",
+  "main_topics": [
+    "AI-assisted coding tools",
+    "Integration with existing workflows",
+    "Cloud engineering training",
+    "Serverless architecture",
+    "Python packages for serverless environments",
+    "GenAI strategy"
+  ],
+  "pain_points": [
+    "Streamlining development workflows",
+    "Implementation of AI-assisted tools",
+    "Integration of AI tools with existing workflows",
+    "Movement to serverless architecture"
+  ],
+  "requested_deliverables": [
+    "Best practices for using AI-assisted coding tools",
+    "Recommendations for integrating AI tools with existing workflows",
+    "Recommendations for Python packages for serverless environments",
+    "Answers to specific questions about GenAI strategy"
+  ],
+  "next_steps": [
+    "Detailed discussion on GenAI strategy",
+    "Implementation approaches",
+    "Specific technical recommendations"
+  ],
+  "meeting_id": "meeting_1744940671",
+  "processing_date": "2025-04-17",
+  "meeting_notes_path": "./meetings/meeting_example_meeting/notes/example_meeting.txt"
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "title": "Streamlining Development Workflows with AI-Assisted Tools",
+    "description": "Discuss how AI-assisted tools like Cursor can optimize and streamline development workflows.",
+    "pain_point": "Streamlining development workflows and implementation of AI-assisted tools",
+    "value_proposition": "This content provides insights into how AI-assisted tools can be integrated into development workflows to enhance productivity and efficiency.",
+    "audience": "Developers, project managers, and IT leaders who are looking to integrate AI tools into their workflows.",
+    "content_format": "Blog post"
+  },
+  {
+    "title": "Integrating AI Tools Into Existing Workflows: A Step-by-Step Guide",
+    "description": "Explore best practices and strategies for effectively integrating AI tools into existing development workflows.",
+    "pain_point": "Integration of AI tools with existing workflows",
+    "value_proposition": "This guide provides actionable steps and strategies to seamlessly integrate AI tools into existing workflows, enhancing productivity and efficiency.",
+    "audience": "Development teams, project managers, and IT leaders who are considering or struggling with AI tool integration.",
+    "content_format": "Whitepaper"
+  },
+  {
+    "title": "Moving to a Serverless Architecture: An In-Depth Look",
+    "description": "Delve into the advantages, challenges, and practical considerations of moving to a serverless architecture.",
+    "pain_point": "Movement to serverless architecture",
+    "value_proposition": "This content offers an in-depth examination of the benefits and potential pitfalls of serverless architecture, guiding businesses in their decision-making process.",
+    "audience": "IT leaders, cloud engineers, and decision-makers considering a move to serverless architecture.",
+    "content_format": "Case study"
+  }
+]
