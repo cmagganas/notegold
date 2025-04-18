@@ -2,19 +2,11 @@
 
 ## Attention
 
-
-
 ## Interest
-
-
 
 ## Desire
 
-
-
 ## Action
-
-
 
 ## Full Content
 
